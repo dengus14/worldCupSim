@@ -1,4 +1,4 @@
-package com.worldcupsim.demo.model.enums;
+package com.worldcupsim.demo.enums;
 
 public enum MatchStatus {
     WAITING,

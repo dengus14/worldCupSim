@@ -1,6 +1,6 @@
 package com.worldcupsim.demo.model;
 
-import com.worldcupsim.demo.model.enums.Position;
+import com.worldcupsim.demo.enums.Position;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
