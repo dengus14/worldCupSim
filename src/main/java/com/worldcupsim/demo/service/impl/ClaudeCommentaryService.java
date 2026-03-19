@@ -1,10 +1,9 @@
 package com.worldcupsim.demo.service.impl;
 
-import com.anthropic.Anthropic;
-import com.anthropic.models.Message;
-import com.anthropic.models.MessageCreateParams;
-import com.anthropic.models.MessageParam;
-import com.anthropic.models.TextBlock;
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+import com.anthropic.models.messages.Message;
+import com.anthropic.models.messages.MessageCreateParams;
 import com.worldcupsim.demo.dto.MatchStateDTO;
 import com.worldcupsim.demo.enums.EventType;
 import com.worldcupsim.demo.model.GameEvent;
@@ -34,12 +33,12 @@ public class ClaudeCommentaryService implements CommentaryService {
     private SimpMessagingTemplate messagingTemplate;
 
     private final BlockingQueue<GameEvent> commentaryQueue = new LinkedBlockingQueue<>();
-    private Anthropic client;
+    private AnthropicClient client;
     private MatchStateDTO currentMatchState;
 
     @PostConstruct
     public void init() {
-        client = Anthropic.builder().apiKey(apiKey).build();
+        client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleWithFixedDelay(this::processNextCommentary, 0, 3, TimeUnit.SECONDS);
@@ -67,11 +66,11 @@ public class ClaudeCommentaryService implements CommentaryService {
             String prompt = buildCommentaryPrompt(event);
             String commentary = callClaudeAPI(prompt);
 
-            messagingTemplate.convertAndSend("/topic/commentary",
-                Map.of("text", commentary, "minute", event.getMinute()));
+            Map<String, Object> payload = Map.of("text", commentary, "minute", event.getMinute());
+            messagingTemplate.convertAndSend((Object) "/topic/commentary", payload);
         } catch (Exception e) {
-            messagingTemplate.convertAndSend("/topic/commentary",
-                Map.of("text", "What an exciting moment!", "minute", event.getMinute()));
+            Map<String, Object> fallback = Map.of("text", "What an exciting moment!", "minute", event.getMinute());
+            messagingTemplate.convertAndSend((Object) "/topic/commentary", fallback);
         }
     }
 
@@ -79,15 +78,10 @@ public class ClaudeCommentaryService implements CommentaryService {
         Message response = client.messages().create(MessageCreateParams.builder()
             .model("claude-3-5-sonnet-20241022")
             .maxTokens(150)
-            .messages(Collections.singletonList(
-                MessageParam.builder()
-                    .role(MessageParam.Role.USER)
-                    .content(prompt)
-                    .build()
-            ))
+            .addUserMessage(prompt)
             .build());
 
-        return ((TextBlock) response.content().get(0)).text();
+        return response.content().toString();
     }
 
     private String buildCommentaryPrompt(GameEvent event) {

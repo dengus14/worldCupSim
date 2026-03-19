@@ -1,10 +1,9 @@
 package com.worldcupsim.demo.service.impl;
 
-import com.anthropic.Anthropic;
-import com.anthropic.models.Message;
-import com.anthropic.models.MessageCreateParams;
-import com.anthropic.models.MessageParam;
-import com.anthropic.models.TextBlock;
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.client.okhttp.AnthropicOkHttpClient;
+import com.anthropic.models.messages.Message;
+import com.anthropic.models.messages.MessageCreateParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.worldcupsim.demo.dto.ChatResponseDTO;
@@ -35,12 +34,12 @@ public class ClaudePlayerChatService implements PlayerChatService {
     @Autowired
     private SimulationEngine simulationEngine;
 
-    private Anthropic client;
+    private AnthropicClient client;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostConstruct
     public void init() {
-        client = Anthropic.builder().apiKey(apiKey).build();
+        client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
     }
 
     @Override
@@ -80,15 +79,10 @@ public class ClaudePlayerChatService implements PlayerChatService {
         Message response = client.messages().create(MessageCreateParams.builder()
             .model("claude-3-5-sonnet-20241022")
             .maxTokens(300)
-            .messages(Collections.singletonList(
-                MessageParam.builder()
-                    .role(MessageParam.Role.USER)
-                    .content(prompt)
-                    .build()
-            ))
+            .addUserMessage(prompt)
             .build());
 
-        return ((TextBlock) response.content().get(0)).text();
+        return response.content().toString();
     }
 
     private ChatResponseDTO parseResponse(String rawResponse, String playerName) {
