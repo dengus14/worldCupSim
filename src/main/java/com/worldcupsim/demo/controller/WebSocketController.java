@@ -33,6 +33,16 @@ public class WebSocketController {
 
     @MessageMapping("/chat")
     public void playerChat(ChatMessageDTO chatMessage) {
+        if (chatMessage == null || chatMessage.getPlayerId() == null) {
+            return;
+        }
+        if (chatMessage.getMessage() == null || chatMessage.getMessage().trim().isEmpty()) {
+            return;
+        }
+        if (chatMessage.getMessage().length() > 500) {
+            return;
+        }
+
         chatService.chat(
             chatMessage.getPlayerId(),
             chatMessage.getMessage(),

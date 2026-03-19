@@ -30,12 +30,21 @@ public class MatchController {
 
     @GetMapping("/{matchId}")
     public ResponseEntity<MatchStateDTO> getMatchState(@PathVariable String matchId) {
+        if (matchId == null || matchId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         MatchStateDTO state = matchService.getCurrentMatchState(matchId);
+        if (state == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(state);
     }
 
     @GetMapping("/{matchId}/players")
     public ResponseEntity<List<Player>> getPlayers(@PathVariable String matchId) {
+        if (matchId == null || matchId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         List<Player> players = playerRepository.findAll();
         return ResponseEntity.ok(players);
     }
