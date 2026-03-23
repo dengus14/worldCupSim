@@ -20,8 +20,15 @@ public class PhysicsEngine {
         double moveDistance = player.getSpeed() * 20;
         double ratio = Math.min(1.0, moveDistance / distance);
 
-        player.setX(player.getX() + dx * ratio);
-        player.setY(player.getY() + dy * ratio);
+        double newX = player.getX() + dx * ratio;
+        double newY = player.getY() + dy * ratio;
+
+        // Clamp to field bounds
+        newX = Math.max(0, Math.min(1050, newX));
+        newY = Math.max(0, Math.min(680, newY));
+
+        player.setX(newX);
+        player.setY(newY);
     }
 
     public void updateBall(MatchStateDTO state, Long possessionPlayerId) {

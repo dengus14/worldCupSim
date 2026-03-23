@@ -82,6 +82,8 @@ public class SimulationEngine {
 
             if (currentMatch.getMinute() == 45) {
                 currentMatch.setStatus(MatchStatus.HALFTIME);
+            } else if (currentMatch.getMinute() == 46) {
+                currentMatch.setStatus(MatchStatus.PLAYING);
             } else if (currentMatch.getMinute() == 90) {
                 currentMatch.setStatus(MatchStatus.FINISHED);
             }
@@ -94,6 +96,8 @@ public class SimulationEngine {
 
     private void handleGoal() {
         String side = goalDetection.getGoalSide(currentMatch.getBallX());
+        Long scorerId = currentMatch.getBallPossessionPlayerId();
+
         if (side.equals("HOME")) {
             currentMatch.setAwayScore(currentMatch.getAwayScore() + 1);
         } else {
@@ -102,6 +106,7 @@ public class SimulationEngine {
 
         GameEventDTO goalEvent = new GameEventDTO();
         goalEvent.setType(EventType.GOAL);
+        goalEvent.setPlayerId(scorerId);
         goalEvent.setMinute(currentMatch.getMinute());
         goalEvent.setDescription("Goal!");
 
@@ -116,6 +121,32 @@ public class SimulationEngine {
     private void resetToKickoff() {
         currentMatch.setBallX(525.0);
         currentMatch.setBallY(340.0);
+        currentMatch.setBallPossessionPlayerId(null);
+
+        // Reset player positions to starting formation
+        for (PlayerStateDTO playerState : currentMatch.getPlayers()) {
+            Player player = playerMap.get(playerState.getId());
+            if (player != null) {
+                // Reset to formation positions based on position type
+                switch (player.getPosition()) {
+                    case GK:
+                        player.setX(50.0);
+                        player.setY(340.0);
+                        break;
+                    case DEF:
+                        player.setX(200.0);
+                        break;
+                    case MID:
+                        player.setX(525.0);
+                        break;
+                    case FWD:
+                        player.setX(800.0);
+                        break;
+                }
+                playerState.setX(player.getX());
+                playerState.setY(player.getY());
+            }
+        }
     }
 
     public void queueBehaviorUpdate(Long playerId, BehaviorWeights newWeights) {

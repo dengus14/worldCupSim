@@ -90,7 +90,10 @@ public class PlayerDecisionEngine {
     }
 
     private Point2D.Double trackOpponent(Player player, MatchStateDTO state) {
-        return new Point2D.Double(player.getX() - 50, player.getY());
+        // Defenders should stay in defensive third (x: 50-400)
+        double targetX = Math.max(200, Math.min(400, state.getBallX() - 100));
+        double targetY = state.getBallY();
+        return new Point2D.Double(targetX, targetY);
     }
 
     private double randomOffset() {
